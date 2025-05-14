@@ -15,30 +15,12 @@
             <div class="text-sm font-semibold truncate max-w-[200px]">{{ prediction.prediction_id }}</div>
           </div>
         </div>
-        <div class="flex items-center space-x-3">
-          <div class="px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 text-sm font-medium self-start sm:self-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 inline-block" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-            </svg>
-            Confidence: {{ prediction.confidence_score }}%
-          </div>
-          <div v-if="prediction.ipfs_cid" class="flex items-center text-sm">
-            <button 
-              @click="toggleIPFSMetadata" 
-              class="flex items-center text-indigo-600 hover:text-indigo-800"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-              </svg>
-              {{ showIPFSMetadata ? 'Hide IPFS Data' : 'View IPFS Data' }}
-            </button>
-          </div>
+        <div class="flex items-center px-3 py-1.5 rounded-full bg-blue-100 text-blue-800 text-sm font-medium self-start sm:self-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          Confidence: {{ prediction.confidence_score }}%
         </div>
-      </div>
-      
-      <!-- IPFS Metadata Viewer -->
-      <div v-if="showIPFSMetadata && prediction.ipfs_cid" class="mb-6">
-        <IPFSMetadataViewer :ipfs-cid="prediction.ipfs_cid" />
       </div>
       
       <div v-if="predictionData" class="mb-6 md:mb-8">
@@ -49,10 +31,6 @@
         <div class="h-56 sm:h-64 bg-white rounded-lg border border-gray-100">
           <AllocationChart :chartData="chartData" />
         </div>
-      </div>
-      
-      <div v-if="predictionData && efficiencyData" class="mt-6 md:mt-8">
-        <SystemEfficiencyDisplay :efficiency-data="efficiencyData" />
       </div>
       
       <div v-if="predictionData" class="mt-6 md:mt-8">
@@ -152,16 +130,11 @@
 import axios from 'axios';
 import { ref, reactive, onMounted } from 'vue';
 import AllocationChart from './AllocationChart.vue';
-import IPFSMetadataViewer from './IPFSMetadataViewer.vue';
-import SystemEfficiencyDisplay from './SystemEfficiencyDisplay.vue';
-import { generateEfficiencyReport } from '../services/efficiencyService';
 
 export default {
   name: 'PredictionResults',
   components: {
-    AllocationChart,
-    IPFSMetadataViewer,
-    SystemEfficiencyDisplay
+    AllocationChart
   },
   props: {
     prediction: {
@@ -177,8 +150,7 @@ export default {
       chartData: {
         labels: [],
         datasets: []
-      },
-      showIPFSMetadata: false
+      }
     };
   },
   watch: {
@@ -204,11 +176,6 @@ export default {
           this.predictionData = this.generateSampleData();
           this.prepareChartData();
           this.isLoadingFile = false;
-          
-          // For demo purposes, add a sample IPFS CID if not present
-          if (!this.prediction.ipfs_cid) {
-            this.prediction.ipfs_cid = 'QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB';
-          }
         }, 1000);
         
       } catch (err) {
@@ -216,9 +183,6 @@ export default {
         this.predictionError = 'Failed to load prediction data';
         this.isLoadingFile = false;
       }
-    },
-    toggleIPFSMetadata() {
-      this.showIPFSMetadata = !this.showIPFSMetadata;
     },
     generateSampleData() {
       // This is sample data for demonstration purposes
@@ -237,10 +201,7 @@ export default {
         metadata: {
           prediction_date: new Date().toISOString(),
           total_consumption_hcf: 50000,
-          number_of_boroughs: 5,
-          actualUsed: 48000,
-          waterDelivered: 49000,
-          waterInput: 52000
+          number_of_boroughs: 5
         }
       };
     },
@@ -280,21 +241,6 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
-    }
-  },
-  computed: {
-    efficiencyData() {
-      if (!this.predictionData) return null;
-      
-      const data = {
-        actualUsed: this.predictionData.metadata.actualUsed,
-        totalAllocated: this.predictionData.metadata.total_consumption_hcf,
-        waterDelivered: this.predictionData.metadata.waterDelivered,
-        waterInput: this.predictionData.metadata.waterInput,
-        predicted_allocation: this.predictionData.predicted_allocation
-      };
-      
-      return generateEfficiencyReport(data);
     }
   }
 };

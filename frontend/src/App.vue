@@ -6,9 +6,6 @@ import BlockchainInfo from './components/BlockchainInfo.vue';
 import StakeholderDashboard from './components/StakeholderDashboard.vue';
 import PredictionHistory from './components/PredictionHistory.vue';
 import WaterAnalytics from './components/WaterAnalytics.vue';
-import SystemEfficiencyDisplay from './components/SystemEfficiencyDisplay.vue';
-import systemMetricsService from './services/systemMetricsService';
-import contractService from './services/ContractService';
 
 export default {
   name: 'App',
@@ -19,68 +16,15 @@ export default {
     BlockchainInfo,
     StakeholderDashboard,
     PredictionHistory,
-    WaterAnalytics,
-    SystemEfficiencyDisplay
+    WaterAnalytics
   },
   data() {
     return {
       prediction: null,
-      activeTab: 'dashboard', // 'dashboard', 'predict', 'approve', 'history', 'analytics', 'settings'
-      systemEfficiency: null,
-      totalPredictions: 0,
-      approvedPredictions: 0,
-      systemAccuracy: 0,
-      loading: {
-        metrics: true,
-        predictions: true
-      }
+      activeTab: 'dashboard' // 'dashboard', 'predict', 'approve', 'history', 'analytics', 'settings'
     };
   },
-  async mounted() {
-    // Initialize system metrics service
-    await systemMetricsService.initialize();
-    
-    // Set up periodic refresh
-    this.refreshDashboardData();
-    setInterval(() => this.refreshDashboardData(), 30000); // Refresh every 30 seconds
-  },
   methods: {
-    async refreshDashboardData() {
-      try {
-        this.loading.metrics = true;
-        this.loading.predictions = true;
-
-        // Get system efficiency metrics
-        this.systemEfficiency = systemMetricsService.getEfficiencyReport();
-        
-        // Get blockchain data
-        await contractService.initialize();
-        this.totalPredictions = await contractService.getPredictionCount();
-        
-        // Get approved predictions count
-        const recentPredictions = await systemMetricsService.getRecentPredictions();
-        this.approvedPredictions = recentPredictions.filter(p => p.isFinalized).length;
-        
-        // Calculate system accuracy from recent predictions
-        this.systemAccuracy = this.calculateSystemAccuracy(recentPredictions);
-        
-      } catch (error) {
-        console.error('Error refreshing dashboard data:', error);
-      } finally {
-        this.loading.metrics = false;
-        this.loading.predictions = false;
-      }
-    },
-    
-    calculateSystemAccuracy(predictions) {
-      if (!predictions || predictions.length === 0) return 0;
-      
-      const accuracySum = predictions.reduce((sum, pred) => {
-        return sum + (pred.metadata?.accuracy || 0);
-      }, 0);
-      
-      return (accuracySum / predictions.length).toFixed(1);
-    },
     handlePrediction(predictionData) {
       this.prediction = predictionData;
     },
@@ -118,10 +62,7 @@ export default {
             <div class="flex justify-between items-center">
               <div>
                 <p class="text-sm text-gray-500">Predictions</p>
-                <h3 class="text-2xl font-bold text-gray-800">
-                  <span v-if="loading.predictions">...</span>
-                  <span v-else>{{ totalPredictions }}</span>
-                </h3>
+                <h3 class="text-2xl font-bold text-gray-800">42</h3>
               </div>
               <div class="bg-blue-100 p-3 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -143,10 +84,7 @@ export default {
             <div class="flex justify-between items-center">
               <div>
                 <p class="text-sm text-gray-500">Approved</p>
-                <h3 class="text-2xl font-bold text-gray-800">
-                  <span v-if="loading.predictions">...</span>
-                  <span v-else>{{ approvedPredictions }}</span>
-                </h3>
+                <h3 class="text-2xl font-bold text-gray-800">28</h3>
               </div>
               <div class="bg-green-100 p-3 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,10 +106,7 @@ export default {
             <div class="flex justify-between items-center">
               <div>
                 <p class="text-sm text-gray-500">Accuracy</p>
-                <h3 class="text-2xl font-bold text-gray-800">
-                  <span v-if="loading.predictions">...</span>
-                  <span v-else>{{ systemAccuracy }}%</span>
-                </h3>
+                <h3 class="text-2xl font-bold text-gray-800">99.8%</h3>
               </div>
               <div class="bg-indigo-100 p-3 rounded-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,24 +120,6 @@ export default {
               <span class="text-gray-500">Prediction Accuracy</span>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <!-- System Efficiency Section -->
-      <div class="bg-white rounded-xl shadow-md overflow-hidden">
-        <div v-if="loading.metrics" class="flex justify-center items-center h-48">
-          <svg class="animate-spin h-6 w-6 text-primary mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Loading efficiency metrics...</span>
-        </div>
-        <SystemEfficiencyDisplay 
-          v-else-if="systemEfficiency"
-          :efficiency-data="systemEfficiency"
-        />
-        <div v-else class="flex justify-center items-center h-48">
-          <p class="text-gray-500">No efficiency data available</p>
         </div>
       </div>
       
