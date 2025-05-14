@@ -1,0 +1,28 @@
+{
+  "prediction_id": "f4603355-009b-4d73-8e01-d3826e46243a",
+  "timestamp": "2025-05-14T15:26:28Z",
+  "predicted_allocation": {
+    "BRONX": {
+      "consumption_hcf": 6604.69,
+      "percentage": 19.79
+    },
+    "BROOKLYN": {
+      "consumption_hcf": 8401.99,
+      "percentage": 25.18
+    },
+    "MANHATTAN": {
+      "consumption_hcf": 10967.74,
+      "percentage": 32.86
+    },
+    "QUEENS": {
+      "consumption_hcf": 7399.28,
+      "percentage": 22.17
+    }
+  },
+  "confidence_score": 88.63,
+  "metadata": {
+    "prediction_date": "2025-05-15T15:26:28Z",
+    "total_consumption_hcf": 33373.69,
+    "number_of_boroughs": 4
+  }
+}

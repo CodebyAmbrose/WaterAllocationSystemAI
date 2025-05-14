@@ -1,0 +1,31 @@
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ bidirectional (Bidirection  (1, 14, 256)              161792    
+ al)                                                             
+                                                                 
+ batch_normalization (Batch  (1, 14, 256)              1024      
+ Normalization)                                                  
+                                                                 
+ dropout (Dropout)           (1, 14, 256)              0         
+                                                                 
+ lstm_1 (LSTM)               (1, 64)                   82176     
+                                                                 
+ batch_normalization_1 (Bat  (1, 64)                   256       
+ chNormalization)                                                
+                                                                 
+ dropout_1 (Dropout)         (1, 64)                   0         
+                                                                 
+ dense (Dense)               (1, 32)                   2080      
+                                                                 
+ batch_normalization_2 (Bat  (1, 32)                   128       
+ chNormalization)                                                
+                                                                 
+ dense_1 (Dense)             (1, 1)                    33        
+                                                                 
+=================================================================
+Total params: 247489 (966.75 KB)
+Trainable params: 246785 (964.00 KB)
+Non-trainable params: 704 (2.75 KB)
+_________________________________________________________________
