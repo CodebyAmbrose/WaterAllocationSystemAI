@@ -1,7 +1,7 @@
 {
-  "name": "water-allocation-system",
+  "name": "biwms",
   "version": "1.0.0",
-  "description": "AI-powered water consumption prediction and allocation system",
+  "description": "Blockchain Integrated Water Management System",
   "main": "app.py",
   "scripts": {
     "start": "uvicorn app:app --reload",

@@ -8,7 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
           </svg>
         </button>
-        <span class="font-bold text-lg text-gray-900">WaterAlloc</span>
+        <span class="font-bold text-lg text-gray-900">BIWMS</span>
       </div>
       <div class="flex items-center">
         <div class="relative">
@@ -41,7 +41,7 @@
               <path d="M9.29 15.88L13.17 12 9.29 8.12c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0l4.59 4.59c.39.39.39 1.02 0 1.41L10.7 17.3c-.39.39-1.02.39-1.41 0-.38-.39-.39-1.03 0-1.42z"/>
             </svg>
           </div>
-          <span v-if="!collapsed || !isDesktop" class="ml-2 font-bold text-lg">WaterAlloc</span>
+          <span v-if="!collapsed || !isDesktop" class="ml-2 font-bold text-lg">BIWMS</span>
         </div>
         <div class="flex">
           <button @click="toggleMobileMenu" class="md:hidden text-gray-400 hover:text-white">
@@ -87,7 +87,7 @@
         </div>
         <div class="ml-3">
           <p class="text-sm font-medium text-white">Water Admin</p>
-          <p class="text-xs text-blue-200">AI-Powered System</p>
+          <p class="text-xs text-blue-200">Management System</p>
         </div>
       </div>
     </div>
@@ -95,30 +95,30 @@
     <!-- Main content -->
     <div class="flex-1 flex flex-col overflow-hidden bg-gray-50 w-full">
       <!-- Top navigation (desktop) -->
-      <header class="bg-white shadow-sm h-16 hidden md:flex items-center justify-between px-6 z-10 w-full">
+      <header class="bg-white border-b border-gray-200 shadow-sm h-16 hidden md:flex items-center justify-between px-6 z-10 w-full">
         <div class="flex items-center">
-          <h1 class="text-xl font-semibold text-gray-800">{{ getCurrentPageTitle }}</h1>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">{{ getCurrentPageTitle }}</h1>
         </div>
         <div class="flex items-center space-x-4">
           <div class="relative">
-            <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center shadow-sm">
-              <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+            <div class="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 px-4 py-2 rounded-xl text-sm flex items-center shadow-sm border border-green-200">
+              <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
               BSC Testnet Connected
             </div>
           </div>
-          <button class="p-1 text-gray-500 hover:text-gray-700 focus:outline-none relative">
+          <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-200 focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">3</span>
+            <span class="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-lg">3</span>
           </button>
         </div>
       </header>
       
-      <!-- Main content area -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-6 w-full">
-        <slot></slot>
-      </main>
+          <!-- Main content area -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 w-full bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+      <slot></slot>
+    </main>
     </div>
   </div>
 </template>

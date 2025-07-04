@@ -1,6 +1,6 @@
-# Water Allocation System
+# BIWMS (Blockchain Integrated Water Management System)
 
-An AI-powered system for predicting and allocating water consumption across different boroughs.
+A system for predicting and allocating water consumption across different boroughs.
 
 ## Overview
 

@@ -111,7 +111,7 @@ export async function getPredictionAccuracy() {
     datasets: [
       {
         label: 'AI Prediction Accuracy (%)',
-        data: [95.2, 95.8, 96.3, 97.1, 98.0, 98.2, 98.5, 98.9, 99.1, 99.3, 99.6, 99.8],
+        data: [93.2, 93.8, 94.3, 94.7, 95.1, 95.4, 95.6, 95.8, 95.9, 96.0, 96.0, 96.0],
         borderColor: '#10b981',
         backgroundColor: 'rgba(16, 185, 129, 0.1)'
       }

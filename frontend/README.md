@@ -1,6 +1,6 @@
-# Water Allocation System Frontend
+# BIWMS Frontend
 
-Modern Vue.js frontend for the Water Allocation System that integrates AI prediction with blockchain technology.
+Modern Vue.js frontend for BIWMS (Blockchain Integrated Water Management System) that integrates AI prediction with blockchain technology.
 
 ## Features
 

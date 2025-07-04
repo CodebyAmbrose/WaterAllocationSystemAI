@@ -54,7 +54,7 @@ def upload_to_ipfs(file_path):
             'pinataMetadata': json.dumps({
                 'name': file_name,
                 'keyvalues': {
-                    'source': 'water_allocation_system',
+                    'source': 'biwms',
                     'timestamp': os.path.getmtime(file_path)
                 }
             })

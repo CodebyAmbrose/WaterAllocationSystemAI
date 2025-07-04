@@ -89,10 +89,17 @@
               <span class="text-xs text-gray-500">IPFS Hash:</span>
               <div class="flex items-center">
                 <span class="text-xs font-mono truncate">{{ prediction.ipfsHash }}</span>
+                <button 
+                  @click="viewPrediction(prediction.ipfsHash)"
+                  class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"
+                  title="View Prediction Details"
+                >
+                  View Details
+                </button>
                 <a 
                   :href="`https://gateway.pinata.cloud/ipfs/${prediction.ipfsHash}`" 
                   target="_blank"
-                  class="ml-1 text-primary hover:text-blue-700"
+                  class="ml-1 text-gray-400 hover:text-gray-600"
                   title="View on IPFS"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -173,16 +180,23 @@
         {{ error }}
       </div>
     </div>
+
+    <!-- Prediction Viewer Modal -->
+    <PredictionViewer ref="predictionViewer" />
   </div>
 </template>
 
 <script>
 import contractService from '../services/ContractService';
+import PredictionViewer from './PredictionViewer.vue';
 
 const CONTRACT_ADDRESS = '0x6b282341D709b3c6f6cfdF366Be2d326dDA39Ce4';
 
 export default {
   name: 'StakeholderDashboard',
+  components: {
+    PredictionViewer
+  },
   data() {
     return {
       CONTRACT_ADDRESS,
@@ -292,8 +306,38 @@ export default {
         // Update approval status
         this.approvalStatus[id] = true;
         
-        // Refresh the predictions to get updated approval counts
+        // Refresh the predictions to get updated approval counts and check finalization
         await this.refreshData();
+        
+        // Check if this approval finalized the prediction
+        const updatedPrediction = this.predictions.find(p => p.id === id);
+        if (updatedPrediction && updatedPrediction.isFinalized) {
+          // Prediction is now finalized! Update dashboard stats counter via API
+          try {
+            const response = await fetch('http://localhost:8000/stats/approve', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ 
+                prediction_id: id,
+                finalized: true
+              })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('Dashboard stats updated for finalized prediction:', data);
+              // Emit event to parent to update dashboard stats in real-time
+              this.$emit('approval-updated', data.stats);
+            }
+          } catch (apiError) {
+            console.warn('Failed to update dashboard stats:', apiError);
+            // Don't fail the whole approval if dashboard update fails
+          }
+        } else {
+          console.log(`Prediction ${id} approved but not yet finalized (${updatedPrediction?.approvals}/${this.minApprovals} approvals)`);
+        }
       } catch (error) {
         console.error('Error approving prediction:', error);
         this.error = 'Failed to approve prediction. ' + error.message;
@@ -316,6 +360,18 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    async viewPrediction(ipfsHash) {
+      try {
+        // For now, we'll use the IPFS hash as identifier
+        // The backend will search for predictions containing this hash
+        // Or we could map IPFS hashes to prediction filenames
+        await this.$refs.predictionViewer.viewPrediction(ipfsHash);
+      } catch (error) {
+        console.error('Error viewing prediction:', error);
+        this.error = 'Failed to load prediction details: ' + error.message;
+      }
     }
   }
 };

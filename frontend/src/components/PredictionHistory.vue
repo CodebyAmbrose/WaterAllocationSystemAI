@@ -1,270 +1,243 @@
 <template>
-  <div class="card">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold">Prediction History</h2>
-      <div class="flex space-x-2">
-        <button @click="refreshHistory" class="text-primary hover:text-blue-700 flex items-center text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
+  <div class="prediction-history">
+    <h2 class="text-2xl font-bold mb-6">Prediction History</h2>
+    
+    <!-- Search -->
+    <div class="mb-6">
+      <input 
+        v-model="searchQuery" 
+        type="text" 
+        placeholder="Search predictions..."
+        class="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      >
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="text-center py-8">
+      <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-blue-500 bg-blue-100">
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Loading predictions...
       </div>
     </div>
 
-    <div v-if="loading" class="flex justify-center my-8">
-      <svg class="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <span class="ml-2">Loading prediction history...</span>
-    </div>
-
-    <div v-else-if="predictions.length === 0" class="text-center py-6 bg-gray-50 rounded-lg">
-      <p class="text-gray-500">No historical predictions found</p>
-    </div>
-
-    <div v-else>
-      <!-- Prediction Timeline -->
-      <div class="relative">
-        <div class="absolute h-full w-0.5 bg-gray-200 left-5 top-0"></div>
-        
-        <div v-for="prediction in predictions" :key="prediction.id" class="mb-8 relative pl-14">
-          <!-- Timeline Dot -->
-          <div 
-            class="absolute left-0 bg-white border-4 rounded-full h-10 w-10 flex items-center justify-center"
-            :class="{
-              'border-green-500': prediction.isFinalized,
-              'border-yellow-500': !prediction.isFinalized
-            }"
-          >
-            <span class="text-sm font-semibold">{{ prediction.id }}</span>
+    <!-- Error -->
+    <div v-else-if="error" class="text-center py-8">
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
           </div>
-          
-          <!-- Prediction Card -->
-          <div 
-            class="border rounded-lg p-4 transition-all"
-            :class="{
-              'border-green-200 bg-green-50': prediction.isFinalized,
-              'border-yellow-200 bg-yellow-50': !prediction.isFinalized
-            }"
-          >
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="flex items-center">
-                  <h4 class="font-medium text-gray-900">Prediction #{{ prediction.id }}</h4>
-                  <span
-                    v-if="prediction.isFinalized"
-                    class="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded"
-                  >
-                    Approved
-                  </span>
-                  <span 
-                    v-else 
-                    class="ml-2 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded"
-                  >
-                    Pending Approval
-                  </span>
-                </div>
-                <p class="text-sm text-gray-500 mt-1">
-                  {{ formatDate(prediction.timestamp) }}
-                </p>
-              </div>
-              <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                Confidence: {{ prediction.confidenceScore }}%
-              </span>
-            </div>
-            
-            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span class="text-xs text-gray-500">IPFS Hash:</span>
-                <div class="flex items-center">
-                  <span class="text-xs font-mono truncate">{{ prediction.ipfsHash }}</span>
-                  <a 
-                    :href="`https://gateway.pinata.cloud/ipfs/${prediction.ipfsHash}`" 
-                    target="_blank"
-                    class="ml-1 text-primary hover:text-blue-700"
-                    title="View on IPFS"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-              <div>
-                <span class="text-xs text-gray-500">Oracle:</span>
-                <div class="flex items-center">
-                  <span class="text-xs font-mono truncate">{{ shortenAddress(prediction.submittedBy) }}</span>
-                  <a 
-                    :href="`https://testnet.bscscan.com/address/${prediction.submittedBy}`" 
-                    target="_blank"
-                    class="ml-1 text-primary hover:text-blue-700"
-                    title="View on BSC Testnet Explorer"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </div>
-            
-            <div class="mt-3">
-              <span class="text-xs text-gray-500">Approvals ({{ prediction.approvals }}/{{ minApprovalsRequired }}):</span>
-              <div class="flex items-center mt-1">
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    class="bg-primary h-2.5 rounded-full" 
-                    :style="{ width: `${(prediction.approvals / minApprovalsRequired) * 100}%` }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="mt-4 flex justify-end">
-              <a 
-                :href="`https://testnet.bscscan.com/address/${contractAddress}#readContract`" 
-                target="_blank"
-                class="text-primary text-xs flex items-center hover:underline"
-              >
-                View Transaction Details
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Error Loading Predictions</h3>
+            <div class="mt-2 text-sm text-red-700">{{ error }}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div v-if="error" class="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
-        {{ error }}
+    <!-- Professional Table Layout -->
+    <div v-else class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+      <!-- Table Header -->
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-lg font-medium text-gray-900">
+          Prediction Records
+          <span class="ml-2 text-sm font-normal text-gray-500">({{ filteredPredictions.length }} entries)</span>
+        </h3>
       </div>
 
-      <div class="mt-6 flex justify-center">
-        <button 
-          v-if="hasMorePredictions" 
-          @click="loadMorePredictions" 
-          class="btn btn-secondary text-sm"
-          :disabled="loadingMore"
-        >
-          <span v-if="loadingMore">
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Loading...
-          </span>
-          <span v-else>Load More</span>
-        </button>
+      <!-- Table Content -->
+      <div v-if="filteredPredictions.length === 0" class="px-6 py-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No predictions found</h3>
+        <p class="mt-1 text-sm text-gray-500">No prediction records match your search criteria.</p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Prediction ID
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Filename
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Confidence Score
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Timestamp
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-for="prediction in filteredPredictions" :key="prediction.prediction_id" class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-2 w-2 bg-green-400 rounded-full mr-3"></div>
+                  {{ prediction.prediction_id || 'N/A' }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="max-w-xs truncate" :title="prediction.filename">
+                  {{ prediction.filename || 'Unnamed' }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="flex items-center">
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between">
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ prediction.confidence_score }}%
+                      </div>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                      <div 
+                        class="h-1.5 rounded-full transition-all duration-300"
+                        :class="getConfidenceColor(prediction.confidence_score)"
+                        :style="{ width: prediction.confidence_score + '%' }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex flex-col">
+                  <span>{{ formatDate(prediction.timestamp) }}</span>
+                  <span class="text-xs text-gray-400">{{ formatTime(prediction.timestamp) }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button 
+                  @click="viewPrediction(prediction.filename)" 
+                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                >
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  View Details
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+
+    <PredictionViewer ref="predictionViewer" />
   </div>
 </template>
 
 <script>
-import contractService from '../services/ContractService';
+import PredictionViewer from './PredictionViewer.vue';
 
 export default {
   name: 'PredictionHistory',
+  components: {
+    PredictionViewer
+  },
   data() {
     return {
-      predictions: [],
-      loading: true,
-      loadingMore: false,
+      loading: false,
       error: null,
-      currentPage: 0,
-      pageSize: 5,
-      totalPredictions: 0,
-      minApprovalsRequired: 0,
-      contractAddress: '0x6b282341D709b3c6f6cfdF366Be2d326dDA39Ce4'
+      predictions: [],
+      searchQuery: ''
     };
   },
   computed: {
-    hasMorePredictions() {
-      return this.predictions.length < this.totalPredictions;
+    filteredPredictions() {
+      if (!this.searchQuery) return this.predictions;
+      const query = this.searchQuery.toLowerCase();
+      return this.predictions.filter(p => 
+        (p.filename || '').toLowerCase().includes(query) ||
+        (p.prediction_id || '').toLowerCase().includes(query)
+      );
     }
   },
   async mounted() {
-    try {
-      await this.loadPredictionHistory();
-    } catch (error) {
-      console.error('Error in mounting PredictionHistory:', error);
-      this.error = 'Failed to connect to blockchain. Please refresh the page.';
-      this.loading = false;
-    }
+    await this.loadPredictions();
   },
   methods: {
-    async loadPredictionHistory() {
+    async loadPredictions() {
+      this.loading = true;
       try {
-        this.loading = true;
-        this.error = null;
-        
-        // Initialize contract service
-        await contractService.initialize();
-        
-        // Get total prediction count and minimum approvals required
-        this.totalPredictions = await contractService.getPredictionCount();
-        this.minApprovalsRequired = await contractService.getMinApprovalsRequired();
-        
-        // Load the first page of predictions (most recent ones)
-        const startId = Math.max(0, this.totalPredictions - this.pageSize);
-        const count = Math.min(this.pageSize, this.totalPredictions);
-        
-        this.predictions = await contractService.getMultiplePredictions(startId, count);
-        this.currentPage = 1;
-      } catch (error) {
-        console.error('Error loading prediction history:', error);
-        this.error = 'Failed to load prediction history. Please try again.';
+        const response = await fetch('http://localhost:8000/predictions/list');
+        const data = await response.json();
+        if (data.status === 'success') {
+          this.predictions = data.predictions;
+        }
+      } catch (err) {
+        this.error = err.message;
       } finally {
         this.loading = false;
       }
     },
     
-    async loadMorePredictions() {
-      try {
-        this.loadingMore = true;
-        
-        const startId = Math.max(0, this.totalPredictions - ((this.currentPage + 1) * this.pageSize));
-        const count = Math.min(this.pageSize, startId + 1);
-        
-        if (startId < 0 || count <= 0) {
-          return;
-        }
-        
-        const morePredictions = await contractService.getMultiplePredictions(startId, count);
-        this.predictions = [...this.predictions, ...morePredictions];
-        this.currentPage++;
-      } catch (error) {
-        console.error('Error loading more predictions:', error);
-        this.error = 'Failed to load more predictions. Please try again.';
-      } finally {
-        this.loadingMore = false;
-      }
+    async viewPrediction(predictionId) {
+      await this.$refs.predictionViewer.viewPrediction(predictionId);
     },
-    
-    async refreshHistory() {
-      this.currentPage = 0;
-      this.predictions = [];
-      await this.loadPredictionHistory();
-    },
-    
-    formatDate(timestamp) {
-      if (!timestamp) return '';
-      return new Date(timestamp).toLocaleString('en-US', {
+
+    formatDate(dateString) {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: 'numeric'
       });
     },
-    
-    shortenAddress(address) {
-      if (!address) return '';
-      return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+
+    formatTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    },
+
+    getConfidenceColor(score) {
+      if (score >= 80) return 'bg-green-500';
+      if (score >= 60) return 'bg-yellow-500';
+      return 'bg-red-500';
     }
   }
 };
-</script> 
+</script>
+
+<style scoped>
+/* Enhanced hover effects */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom scrollbar for table */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style> 

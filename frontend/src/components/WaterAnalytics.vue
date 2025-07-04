@@ -1,111 +1,122 @@
 <template>
   <div class="analytics-container">
+    <!-- Infrastructure Analytics Header -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <h2 class="text-xl font-bold text-gray-900">Water System Infrastructure Analytics</h2>
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+              <div class="w-3 h-3 rounded-full" :class="systemHealthColor"></div>
+              <span class="text-sm font-medium" :class="systemHealthTextColor">
+                {{ systemHealthStatus }}
+              </span>
+            </div>
+          </div>
+          <span v-if="lastUpdate" class="text-xs text-gray-500">
+            Last update: {{ lastUpdate }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Water Usage Trend Chart -->
+      <!-- Actual Water Consumption Trends -->
       <div class="bg-white rounded-lg shadow p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Monthly Water Usage Trends</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Actual Water Consumption</h3>
           <div class="flex space-x-2">
             <button 
               class="px-3 py-1 text-xs font-medium rounded-full"
-              :class="selectedYear === 2023 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
-              @click="changeYear(2023)"
+              :class="selectedYear === 2025 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
+              @click="changeYear(2025)"
             >
-              2023
+              2025
             </button>
             <button 
               class="px-3 py-1 text-xs font-medium rounded-full"
-              :class="selectedYear === 2022 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
-              @click="changeYear(2022)"
+              :class="selectedYear === 2024 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
+              @click="changeYear(2024)"
             >
-              2022
+              2024
             </button>
           </div>
         </div>
         <div class="h-64 relative">
-          <div v-if="loading.usageData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+          <div v-if="loading.consumptionData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
             <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
           </div>
-          <Line :data="lineChartData" :options="lineChartOptions" />
+          <Line :data="consumptionChartData" :options="consumptionChartOptions" />
         </div>
       </div>
 
-      <!-- Borough Comparison Chart -->
+      <!-- Borough Water Distribution -->
       <div class="bg-white rounded-lg shadow p-4">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Borough Water Allocation</h3>
+          <h3 class="text-lg font-semibold text-gray-900">Borough Water Distribution</h3>
           <select 
             class="text-sm border-gray-300 rounded-md"
             v-model="selectedTimeframe"
             @change="changeTimeframe(selectedTimeframe)"
           >
-            <option value="12">Last 12 Months</option>
-            <option value="6">Last 6 Months</option>
-            <option value="3">Last 3 Months</option>
+            <option value="current">Current Data</option>
+            <option value="monthly">Monthly Average</option>
+            <option value="yearly">Yearly Total</option>
           </select>
         </div>
         <div class="h-64 relative">
           <div v-if="loading.boroughData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
             <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
           </div>
-          <Bar :data="barChartData" :options="barChartOptions" />
+          <Bar :data="boroughChartData" :options="boroughChartOptions" />
         </div>
       </div>
 
-      <!-- Water Quality Metrics -->
+      <!-- System Performance -->
       <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Water Quality Metrics</h3>
-        <div class="h-64 relative">
-          <div v-if="loading.qualityData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
-            <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-          </div>
-          <Radar :data="radarChartData" :options="radarChartOptions" />
-        </div>
-      </div>
-
-      <!-- Efficiency Score -->
-      <div class="bg-white rounded-lg shadow p-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Water Usage Efficiency</h3>
-        <div v-if="loading.efficiencyData" class="flex items-center justify-center py-10">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">System Performance</h3>
+        <div v-if="loading.performanceData" class="flex items-center justify-center py-10">
           <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
         </div>
         <div v-else class="grid grid-cols-2 gap-4">
           <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="text-sm font-medium text-gray-700 mb-2">Overall Efficiency Score</h4>
+            <h4 class="text-sm font-medium text-gray-700 mb-2">System Uptime</h4>
             <div class="h-40 relative">
-              <Doughnut :data="doughnutChartData" :options="doughnutChartOptions" />
+              <Doughnut :data="uptimeChartData" :options="uptimeChartOptions" />
               <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center">
-                  <span class="text-2xl font-bold text-blue-600">{{ doughnutChartData.datasets[0].data[0] }}%</span>
-                  <div class="text-xs text-gray-500">Efficiency</div>
+                  <span class="text-2xl font-bold text-green-600">{{ formattedUptime }}%</span>
+                  <div class="text-xs text-gray-500">Uptime</div>
                 </div>
               </div>
             </div>
           </div>
           <div class="space-y-4">
-            <div v-for="(borough, index) in boroughScores" :key="index" class="bg-gray-50 p-3 rounded-lg">
+            <div v-for="(metric, index) in performanceMetrics" :key="index" class="bg-gray-50 p-3 rounded-lg">
               <div class="flex justify-between items-center mb-1">
-                <span class="text-sm font-medium text-gray-700">{{ borough.name }}</span>
-                <span class="text-sm font-semibold" :class="getScoreColor(borough.score)">{{ borough.score }}%</span>
+                <span class="text-sm font-medium text-gray-700">{{ metric.name }}</span>
+                <span class="text-sm font-semibold" :class="metric.valueColor">{{ metric.value }}</span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="h-2 rounded-full" :class="getScoreBackground(borough.score)" :style="{ width: `${borough.score}%` }"></div>
+                <div class="h-2 rounded-full" :class="metric.barColor" :style="{ width: `${metric.percentage}%` }"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Prediction Accuracy -->
+      <!-- Conservation Effectiveness -->
       <div class="bg-white rounded-lg shadow p-4 col-span-1 lg:col-span-2">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Prediction Accuracy History</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Water Conservation Effectiveness</h3>
         <div class="h-64 relative">
-          <div v-if="loading.accuracyData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
+          <div v-if="loading.conservationData" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70">
             <div class="w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
           </div>
-          <Line :data="accuracyChartData" :options="accuracyChartOptions" />
+          <Line :data="conservationChartData" :options="conservationChartOptions" />
         </div>
       </div>
+
+
     </div>
   </div>
 </template>
@@ -118,21 +129,13 @@ import {
   PointElement, 
   LineElement,
   BarElement,
-  RadialLinearScale,
   ArcElement,
   Title,
   Tooltip, 
   Legend,
   Filler
 } from 'chart.js';
-import { Line, Bar, Radar, Doughnut } from 'vue-chartjs';
-import { 
-  getMonthlyUsageData, 
-  getBoroughAllocationData, 
-  getWaterQualityData, 
-  getEfficiencyScores, 
-  getPredictionAccuracy 
-} from '../services/analyticsService';
+import { Line, Bar, Doughnut } from 'vue-chartjs';
 
 ChartJS.register(
   CategoryScale, 
@@ -140,7 +143,6 @@ ChartJS.register(
   PointElement, 
   LineElement,
   BarElement,
-  RadialLinearScale,
   ArcElement,
   Title,
   Tooltip, 
@@ -153,26 +155,31 @@ export default {
   components: {
     Line,
     Bar,
-    Radar,
     Doughnut
   },
   data() {
     return {
-      selectedYear: 2023,
-      selectedTimeframe: '12',
+      selectedYear: 2025,
+      selectedTimeframe: 'current',
       loading: {
-        usageData: true,
+        consumptionData: true,
         boroughData: true,
-        qualityData: true,
-        efficiencyData: true,
-        accuracyData: true
+        performanceData: true,
+        conservationData: true
       },
-      // Default empty data structures
-      lineChartData: {
-        labels: [],
+      eventSource: null,
+      isConnected: false,
+      lastUpdate: null,
+      systemHealthStatus: 'All Systems Operational',
+      systemHealthColor: 'bg-green-400',
+      systemHealthTextColor: 'text-green-600',
+      
+      // Chart data structures
+      consumptionChartData: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         datasets: [{ data: [] }]
       },
-      lineChartOptions: {
+      consumptionChartOptions: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -186,10 +193,14 @@ export default {
         },
         scales: {
           y: {
-            beginAtZero: false,
+            beginAtZero: true,
             grid: {
               drawBorder: false,
             },
+            title: {
+              display: true,
+              text: 'Consumption (HCF)'
+            }
           },
           x: {
             grid: {
@@ -198,11 +209,12 @@ export default {
           }
         }
       },
-      barChartData: {
+      
+      boroughChartData: {
         labels: [],
         datasets: [{ data: [] }]
       },
-      barChartOptions: {
+      boroughChartOptions: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -216,6 +228,10 @@ export default {
             grid: {
               drawBorder: false,
             },
+            title: {
+              display: true,
+              text: 'Water Volume (HCF)'
+            }
           },
           x: {
             grid: {
@@ -224,36 +240,12 @@ export default {
           }
         }
       },
-      radarChartData: {
-        labels: [],
-        datasets: [{ data: [] }]
-      },
-      radarChartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          r: {
-            angleLines: {
-              color: 'rgba(200, 200, 200, 0.3)',
-            },
-            grid: {
-              color: 'rgba(200, 200, 200, 0.3)',
-            },
-            pointLabels: {
-              font: {
-                size: 10
-              }
-            },
-            suggestedMin: 50,
-            suggestedMax: 100
-          }
-        }
-      },
-      doughnutChartData: {
-        labels: ['Efficient', 'Inefficient'],
+      
+      uptimeChartData: {
+        labels: ['Uptime', 'Downtime'],
         datasets: [{ data: [0, 100] }]
       },
-      doughnutChartOptions: {
+      uptimeChartOptions: {
         responsive: true,
         maintainAspectRatio: false,
         cutout: '75%',
@@ -266,12 +258,12 @@ export default {
           }
         }
       },
-      boroughScores: [],
-      accuracyChartData: {
-        labels: [],
+      
+      conservationChartData: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
         datasets: [{ data: [] }]
       },
-      accuracyChartOptions: {
+      conservationChartOptions: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -281,11 +273,14 @@ export default {
         },
         scales: {
           y: {
-            min: 90,
-            max: 100,
+            beginAtZero: true,
             grid: {
               drawBorder: false,
             },
+            title: {
+              display: true,
+              text: 'Conservation Rate (%)'
+            }
           },
           x: {
             grid: {
@@ -293,125 +288,261 @@ export default {
             }
           }
         }
-      }
+      },
+      
+      performanceMetrics: [],
+      formattedUptime: 0
     };
   },
   mounted() {
-    this.loadAllData();
+    this.loadAllData().then(() => {
+      this.connectToRealTimeAnalytics();
+    });
+  },
+  beforeUnmount() {
+    this.disconnectFromRealTime();
   },
   methods: {
+    connectToRealTimeAnalytics() {
+      if (this.eventSource) {
+        this.eventSource.close();
+      }
+
+      try {
+        this.eventSource = new EventSource('http://localhost:8000/stats/stream');
+        
+        this.eventSource.onopen = () => {
+          console.log('Connected to real-time infrastructure analytics');
+          this.isConnected = true;
+        };
+
+        this.eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'heartbeat') {
+              return; // Don't process heartbeat as data update
+            }
+            
+            if (data.analytics) {
+              console.log('🎯 Infrastructure analytics data received');
+              this.updateChartsWithRealTimeData(data.analytics);
+              this.lastUpdate = new Date().toLocaleTimeString();
+            }
+          } catch (error) {
+            console.error('❌ Error parsing infrastructure analytics:', error);
+          }
+        };
+
+        this.eventSource.onerror = (error) => {
+          console.error('Infrastructure analytics SSE error:', error);
+          this.isConnected = false;
+          setTimeout(() => {
+            if (!this.isConnected) {
+              this.connectToRealTimeAnalytics();
+            }
+          }, 5000);
+        };
+
+      } catch (error) {
+        console.error('Failed to establish infrastructure analytics SSE connection:', error);
+      }
+    },
+
+    disconnectFromRealTime() {
+      if (this.eventSource) {
+        this.eventSource.close();
+        this.eventSource = null;
+        this.isConnected = false;
+      }
+    },
+
+    updateChartsWithRealTimeData(analyticsData) {
+      console.log('Updating infrastructure charts with data:', analyticsData);
+      
+      // Update actual consumption chart
+      this.updateConsumptionChart(analyticsData.actual_consumption);
+      
+      // Update borough distribution chart
+      this.updateBoroughChart(analyticsData.actual_consumption?.borough_totals);
+      
+      // Update system performance metrics
+      this.updatePerformanceMetrics(analyticsData.infrastructure);
+      
+      // Update conservation chart
+      this.updateConservationChart(analyticsData.conservation);
+      
+      // Update system health status
+      this.updateSystemHealthStatus(analyticsData.infrastructure);
+      
+      // Mark all as loaded
+      Object.keys(this.loading).forEach(key => {
+        this.loading[key] = false;
+      });
+    },
+
+    updateConsumptionChart(consumptionData) {
+      if (!consumptionData?.monthly_trends) return;
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const data = consumptionData.monthly_trends.map(trend => trend.consumption || 0);
+      
+      this.consumptionChartData = {
+        labels: months,
+        datasets: [
+          {
+            label: 'Actual Water Consumption (HCF)',
+            data: data,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      };
+    },
+
+    updateBoroughChart(boroughData) {
+      if (!boroughData) return;
+      
+      this.boroughChartData = {
+        labels: Object.keys(boroughData),
+        datasets: [
+          {
+            label: 'Water Distribution (HCF)',
+            data: Object.values(boroughData),
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.7)',
+              'rgba(99, 102, 241, 0.7)',
+              'rgba(79, 70, 229, 0.7)',
+              'rgba(139, 92, 246, 0.7)',
+              'rgba(168, 85, 247, 0.7)'
+            ]
+          }
+        ]
+      };
+    },
+
+    updatePerformanceMetrics(infrastructureData) {
+      if (!infrastructureData) return;
+      
+      this.formattedUptime = Math.round((infrastructureData.system_uptime || 0) * 100) / 100;
+      
+      this.uptimeChartData = {
+        labels: ['Uptime', 'Downtime'],
+        datasets: [
+          {
+            data: [this.formattedUptime, 100 - this.formattedUptime],
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(229, 231, 235, 0.5)'
+            ],
+            borderWidth: 0
+          }
+        ]
+      };
+
+      this.performanceMetrics = [
+        {
+          name: 'API Response',
+          value: `${infrastructureData.api_response_time_ms || 0}ms`,
+          percentage: Math.max(0, 100 - (infrastructureData.api_response_time_ms || 0) / 2),
+          valueColor: (infrastructureData.api_response_time_ms || 0) < 100 ? 'text-green-600' : 'text-yellow-600',
+          barColor: (infrastructureData.api_response_time_ms || 0) < 100 ? 'bg-green-500' : 'bg-yellow-500'
+        },
+        {
+          name: 'Processing Rate',
+          value: `${infrastructureData.data_processing_rate || 0}/hr`,
+          percentage: Math.min(100, (infrastructureData.data_processing_rate || 0) * 10),
+          valueColor: 'text-blue-600',
+          barColor: 'bg-blue-500'
+        },
+        {
+          name: 'Upload Success',
+          value: `${infrastructureData.file_upload_success_rate || 100}%`,
+          percentage: infrastructureData.file_upload_success_rate || 100,
+          valueColor: (infrastructureData.file_upload_success_rate || 100) >= 95 ? 'text-green-600' : 'text-red-600',
+          barColor: (infrastructureData.file_upload_success_rate || 100) >= 95 ? 'bg-green-500' : 'bg-red-500'
+        }
+      ];
+    },
+
+    updateConservationChart(conservationData) {
+      if (!conservationData?.monthly_conservation_rate) return;
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      
+      this.conservationChartData = {
+        labels: months,
+        datasets: [
+          {
+            label: 'Conservation Rate (%)',
+            data: conservationData.monthly_conservation_rate,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+          }
+        ]
+      };
+    },
+
+
+
+    updateSystemHealthStatus(infrastructureData) {
+      if (!infrastructureData) return;
+      
+      const uptime = infrastructureData.system_uptime || 0;
+      const aiStatus = infrastructureData.ai_model_status || 'healthy';
+      
+      if (uptime >= 99 && aiStatus === 'healthy') {
+        this.systemHealthStatus = 'All Systems Operational';
+        this.systemHealthColor = 'bg-green-400';
+        this.systemHealthTextColor = 'text-green-600';
+      } else if (uptime >= 95) {
+        this.systemHealthStatus = 'Minor Issues Detected';
+        this.systemHealthColor = 'bg-yellow-400';
+        this.systemHealthTextColor = 'text-yellow-600';
+      } else {
+        this.systemHealthStatus = 'System Degraded';
+        this.systemHealthColor = 'bg-red-400';
+        this.systemHealthTextColor = 'text-red-600';
+      }
+    },
+
     async loadAllData() {
-      this.fetchMonthlyUsageData();
-      this.fetchBoroughAllocationData();
-      this.fetchWaterQualityData();
-      this.fetchEfficiencyScores();
-      this.fetchPredictionAccuracy();
-    },
-    
-    async fetchMonthlyUsageData() {
-      this.loading.usageData = true;
       try {
-        const data = await getMonthlyUsageData(this.selectedYear);
-        this.lineChartData = {
-          labels: data.labels,
-          datasets: [
-            {
-              label: 'Total Usage (Million Gallons)',
-              data: data.data,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.4,
-              fill: true
-            }
-          ]
-        };
+        console.log('Loading infrastructure analytics data...');
+        const response = await fetch('http://localhost:8000/analytics');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.analytics) {
+            console.log('Loaded infrastructure analytics data');
+            this.updateChartsWithRealTimeData(data.analytics);
+            return;
+          }
+        }
       } catch (error) {
-        console.error('Error fetching usage data:', error);
-      } finally {
-        this.loading.usageData = false;
+        console.error('Error loading infrastructure analytics:', error);
       }
-    },
-    
-    async fetchBoroughAllocationData() {
-      this.loading.boroughData = true;
-      try {
-        this.barChartData = await getBoroughAllocationData(this.selectedTimeframe);
-      } catch (error) {
-        console.error('Error fetching borough data:', error);
-      } finally {
-        this.loading.boroughData = false;
-      }
-    },
-    
-    async fetchWaterQualityData() {
-      this.loading.qualityData = true;
-      try {
-        this.radarChartData = await getWaterQualityData();
-      } catch (error) {
-        console.error('Error fetching quality data:', error);
-      } finally {
-        this.loading.qualityData = false;
-      }
-    },
-    
-    async fetchEfficiencyScores() {
-      this.loading.efficiencyData = true;
-      try {
-        const data = await getEfficiencyScores();
-        this.doughnutChartData = {
-          labels: ['Efficient', 'Inefficient'],
-          datasets: [
-            {
-              data: [data.overall, 100 - data.overall],
-              backgroundColor: [
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(229, 231, 235, 0.5)'
-              ],
-              borderWidth: 0
-            }
-          ]
-        };
-        this.boroughScores = data.boroughs;
-      } catch (error) {
-        console.error('Error fetching efficiency data:', error);
-      } finally {
-        this.loading.efficiencyData = false;
-      }
-    },
-    
-    async fetchPredictionAccuracy() {
-      this.loading.accuracyData = true;
-      try {
-        this.accuracyChartData = await getPredictionAccuracy();
-      } catch (error) {
-        console.error('Error fetching accuracy data:', error);
-      } finally {
-        this.loading.accuracyData = false;
-      }
+      
+      // Fallback to default state
+      console.log('No infrastructure data found - using default state');
+      Object.keys(this.loading).forEach(key => {
+        this.loading[key] = false;
+      });
     },
     
     changeYear(year) {
       this.selectedYear = year;
-      this.fetchMonthlyUsageData();
+      // Year changes would typically reload data for that year
+      // For now, we'll just update the selected year
     },
     
     changeTimeframe(timeframe) {
       this.selectedTimeframe = timeframe;
-      this.fetchBoroughAllocationData();
-    },
-    
-    getScoreColor(score) {
-      if (score >= 90) return 'text-green-600';
-      if (score >= 80) return 'text-blue-600';
-      if (score >= 70) return 'text-yellow-600';
-      return 'text-red-600';
-    },
-    
-    getScoreBackground(score) {
-      if (score >= 90) return 'bg-green-500';
-      if (score >= 80) return 'bg-blue-500';
-      if (score >= 70) return 'bg-yellow-500';
-      return 'bg-red-500';
+      // Timeframe changes would typically adjust the borough chart data
+      // For now, we'll just update the selected timeframe
     }
   }
 };
